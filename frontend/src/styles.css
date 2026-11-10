@@ -1,0 +1,49 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+:root {
+  --verde: #006b47;
+  --verde-escuro: #004d33;
+  --verde-claro: #e3fbef;
+  --azul: #0b6fa4;
+  --fundo: #f4f5fc;
+  --texto: #14152b;
+  --suave: #5b5f77;
+  --excelente: #0a7a4d;
+  --bom: #1d6fb8;
+  --ruim: #b3261e;
+  --bs-body-font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  background: var(--fundo);
+  color: var(--texto);
+}
+
+.cartao {
+  background: #fff;
+  border: 1px solid #e8e9f3;
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(20, 21, 43, 0.04);
+}
+
+.btn-eco {
+  background: var(--verde);
+  color: #fff;
+  border: 0;
+  border-radius: 12px;
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+}
+.btn-eco:hover:not(:disabled) { background: var(--verde-escuro); color: #fff; }
+.btn-eco:disabled { opacity: 0.5; }
+
+.rotulo-sup {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--suave);
+  font-weight: 600;
+}
+
+input[type="range"] { accent-color: var(--verde); }
