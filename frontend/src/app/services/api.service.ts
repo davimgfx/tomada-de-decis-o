@@ -18,11 +18,13 @@ export class ApiService {
     return this.http.get<ResumoGeral>(`${API}/resumo`);
   }
   contagem(f: Filtros) {
-    const params = new HttpParams()
+    let params = new HttpParams()
       .set('propulsoes', f.propulsoes.join('|'))
       .set('categorias', f.categorias.join('|'))
       .set('marcas', f.marcas.join('|'))
       .set('motores', f.motores.join('|'));
+    if (f.preco_min !== null) params = params.set('preco_min', f.preco_min);
+    if (f.preco_max !== null) params = params.set('preco_max', f.preco_max);
     return this.http.get<{ total: number }>(`${API}/contagem`, { params });
   }
   simular(perfil: Perfil, pesos: Pesos, filtros: Filtros) {

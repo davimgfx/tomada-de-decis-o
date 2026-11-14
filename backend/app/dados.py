@@ -1,6 +1,7 @@
-"""Carga e tratamento da tabela PBEV 2026 (INMETRO)."""
+﻿"""Carga e tratamento da tabela PBEV 2026 (INMETRO)."""
 from __future__ import annotations
 
+import hashlib
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -21,6 +22,29 @@ C_MJ, C_AUT, C_PBE_REL, C_PBE_ABS, C_CONPET, C_CO2_TOTAL, C_CO2 = 28, 29, 30, 31
 PROPULSAO_NORM = {"combustão": "Combustão", "elétrico": "Elétrico", "híbrido": "Híbrido", "plug-in": "Plug-in"}
 COMBUSTIVEL = {"F": "Flex", "G": "Gasolina", "E": "Elétrico", "D": "Diesel", "E100": "Etanol"}
 CATEGORIA_NORM = {"Compacta": "Compacto", "Compacto 4x4": "Compacto"}
+
+# PREÇO ESTIMADO (R$): a planilha do INMETRO não tem preços. Valores-base aproximados por
+# categoria x propulsão, definidos como premissa do sistema (não vêm da FIPE). Usado apenas como filtro.
+BASE = {
+    "Compacto": {"Combustão": 95_000, "Híbrido": 140_000, "Plug-in": 180_000, "Elétrico": 140_000},
+    "Médio": {"Combustão": 150_000, "Híbrido": 200_000, "Plug-in": 250_000, "Elétrico": 220_000},
+    "Grande": {"Combustão": 260_000, "Híbrido": 330_000, "Plug-in": 380_000, "Elétrico": 350_000},
+    "Grande 4x4": {"Combustão": 400_000, "Híbrido": 450_000, "Plug-in": 500_000, "Elétrico": 480_000},
+    "Estrada Grande": {"Combustão": 300_000, "Híbrido": 350_000, "Plug-in": 400_000, "Elétrico": 380_000},
+    "Picape": {"Combustão": 200_000, "Híbrido": 280_000, "Plug-in": 330_000, "Elétrico": 300_000},
+    "Minivan": {"Combustão": 220_000, "Híbrido": 280_000, "Plug-in": 330_000, "Elétrico": 300_000},
+}
+PREMIUM = {
+    "BMW", "MERCEDES-BENZ", "AUDI", "VOLVO", "PORSCHE", "LAND ROVER", "JAGUAR", "LEXUS", "MINI",
+    "MASERATI", "FERRARI", "LAMBORGHINI", "BENTLEY", "ROLLS-ROYCE", "MCLAREN", "ASTON MARTIN", "LOTUS",
+}
+
+
+def _preco_estimado(categoria: str, propulsao: str, marca: str, chave: str) -> float:
+    base = BASE.get(categoria, BASE["Médio"]).get(propulsao, BASE["Médio"]["Combustão"])
+    fator_marca = 1.8 if marca.upper() in PREMIUM else 1.0
+    h = int(hashlib.md5(chave.encode()).hexdigest()[:8], 16) / 0xFFFFFFFF  # 0..1, determinístico
+    return round(base * fator_marca * (0.8 + 0.4 * h), -2)  # variação de ±20%
 
 
 def _num(valor) -> float | None:
@@ -69,12 +93,14 @@ def carregar_veiculos() -> list[dict]:
         if urbano is None or energia is None or co2 is None:
             continue  # sem dado suficiente para o cálculo
         cat_original = str(r[C_CATEGORIA]).strip()
+        categoria = CATEGORIA_NORM.get(cat_original, cat_original)
+        marca = str(r[C_MARCA]).strip()
         veiculos.append({
             "id": i,
-            "marca": str(r[C_MARCA]).strip(),
+            "marca": marca,
             "modelo": str(r[C_MODELO]).strip(),
             "versao": str(r[C_VERSAO] or "").strip(),
-            "categoria": CATEGORIA_NORM.get(cat_original, cat_original),
+            "categoria": categoria,
             "motor": re.sub(r"\s+", "", str(r[C_MOTOR] or "")).upper() or "N/I",
             "propulsao": propulsao,
             "combustivel": COMBUSTIVEL.get(str(r[C_COMB]).strip(), str(r[C_COMB])),
@@ -88,5 +114,6 @@ def carregar_veiculos() -> list[dict]:
             "pbe_relativa": r[C_PBE_REL],
             "pbe_absoluta": r[C_PBE_ABS],
             "selo_conpet": str(r[C_CONPET]).strip().upper() == "SIM",
+            "preco_estimado": _preco_estimado(categoria, propulsao, marca, f"{marca}|{r[C_MODELO]}|{r[C_VERSAO]}|{r[C_MOTOR]}|{i}"),
         })
     return veiculos

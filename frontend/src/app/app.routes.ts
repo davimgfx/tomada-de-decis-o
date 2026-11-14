@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+﻿import { inject } from '@angular/core';
 import { CanActivateFn, Router, Routes } from '@angular/router';
 import { EstadoService } from './services/estado.service';
 

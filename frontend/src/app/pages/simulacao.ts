@@ -125,11 +125,39 @@ type Chave = keyof Pesos;
               </label>
             }
           </div>
+          <div class="d-flex justify-content-between align-items-end mt-3 mb-1">
+            <div class="rotulo-sup">Preço estimado por veículo (R$)</div>
+            <button type="button" class="acao" (click)="limparPreco()">✕ Limpar faixa</button>
+          </div>
+          <div class="row g-2 align-items-center">
+            <div class="col-sm-6">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">De R$</span>
+                <input type="number" class="form-control" inputmode="numeric" step="10000" min="0"
+                       aria-label="Preço mínimo" [placeholder]="(opcoes()?.preco_min ?? 0).toString()"
+                       [value]="precoMin() ?? ''" (input)="mudarPreco('min', $any($event.target).value)" />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">Até R$</span>
+                <input type="number" class="form-control" inputmode="numeric" step="10000" min="0"
+                       aria-label="Preço máximo" [placeholder]="(opcoes()?.preco_max ?? 0).toString()"
+                       [value]="precoMax() ?? ''" (input)="mudarPreco('max', $any($event.target).value)" />
+              </div>
+            </div>
+          </div>
+          <div class="form-text">
+            Valores estimados (a tabela do INMETRO não tem preços), usados apenas como filtro, sem peso no cálculo.
+          </div>
+          @if (faixaInvalida()) {
+            <div class="text-danger small mt-1">O preço mínimo é maior que o máximo.</div>
+          }
         </section>
+
       </div>
 
-      <div class="col-lg-4">
-        <div class="cartao text-white mb-3" style="background: var(--verde)">
+      <div class="col-lg-4">        <div class="cartao text-white mb-3" style="background: var(--verde)">
           <div class="rotulo-sup text-white-50">Universo da simulação</div>
           <div class="display-5 fw-bold">{{ elegiveis() ?? '…' }}</div>
           <div>veículos elegíveis</div>
@@ -183,6 +211,9 @@ export class SimulacaoPage implements OnInit {
   catSel = signal(new Set<string>());
   marSel = signal(new Set<string>());
   motSel = signal(new Set<string>());
+  precoMin = signal<number | null>(null);
+  precoMax = signal<number | null>(null);
+  faixaInvalida = computed(() => this.precoMin() !== null && this.precoMax() !== null && this.precoMin()! > this.precoMax()!);
   buscaMarca = signal('');
   buscaMotor = signal('');
   marcasVisiveis = computed(() => this.filtrarTexto(this.opcoes()?.marcas ?? [], this.buscaMarca()));
@@ -257,6 +288,20 @@ export class SimulacaoPage implements OnInit {
     this.catSel.set(new Set(o.categorias));
     this.marSel.set(new Set(o.marcas));
     this.motSel.set(new Set(o.motores));
+    this.precoMin.set(null);
+    this.precoMax.set(null);
+    this.atualizarContagem();
+  }
+
+  mudarPreco(lado: 'min' | 'max', texto: string) {
+    const n = texto === '' ? null : Math.max(0, Number(texto));
+    (lado === 'min' ? this.precoMin : this.precoMax).set(n !== null && Number.isFinite(n) ? n : null);
+    this.atualizarContagem();
+  }
+
+  limparPreco() {
+    this.precoMin.set(null);
+    this.precoMax.set(null);
     this.atualizarContagem();
   }
 
@@ -291,6 +336,8 @@ export class SimulacaoPage implements OnInit {
       categorias: this.sel(this.catSel(), o?.categorias.length ?? 0),
       marcas: this.sel(this.marSel(), o?.marcas.length ?? 0),
       motores: this.sel(this.motSel(), o?.motores.length ?? 0),
+      preco_min: this.precoMin(),
+      preco_max: this.precoMax(),
     };
   }
 

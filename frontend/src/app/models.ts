@@ -13,6 +13,8 @@ export interface Filtros {
   categorias: string[];
   marcas: string[];
   motores: string[];
+  preco_min: number | null;
+  preco_max: number | null;
 }
 
 export interface Veiculo {
@@ -34,6 +36,7 @@ export interface Veiculo {
   pbe_relativa: string;
   pbe_absoluta: string;
   selo_conpet: boolean;
+  preco_estimado: number;
   score?: number;
   grupo?: Grupo;
 }
@@ -66,6 +69,8 @@ export interface Opcoes {
   categorias: string[];
   marcas: string[];
   motores: string[];
+  preco_min: number;
+  preco_max: number;
   limites_grupos: { Excelente: number; Bom: number };
 }
 

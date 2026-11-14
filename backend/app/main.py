@@ -30,7 +30,8 @@ class Filtros(BaseModel):
     categorias: list[str] = []
     marcas: list[str] = []
     motores: list[str] = []
-    preco_max: float | None = None  # reservado; não utilizado
+    preco_min: float | None = Field(default=None, ge=0)
+    preco_max: float | None = Field(default=None, ge=0)
 
 
 class SimulacaoIn(BaseModel):
@@ -49,6 +50,10 @@ def _filtrar(f: Filtros) -> list[dict]:
         itens = [v for v in itens if v["marca"] in f.marcas]
     if f.motores:
         itens = [v for v in itens if v["motor"] in f.motores]
+    if f.preco_min is not None:
+        itens = [v for v in itens if v["preco_estimado"] >= f.preco_min]
+    if f.preco_max is not None:
+        itens = [v for v in itens if v["preco_estimado"] <= f.preco_max]
     return itens
 
 
@@ -65,6 +70,8 @@ def opcoes():
         "categorias": sorted({i["categoria"] for i in v}),
         "marcas": sorted({i["marca"] for i in v}),
         "motores": sorted({i["motor"] for i in v}),
+        "preco_min": min(i["preco_estimado"] for i in v),
+        "preco_max": max(i["preco_estimado"] for i in v),
         "limites_grupos": saw.LIMITES,
     }
 
@@ -115,10 +122,14 @@ def simular(dados: SimulacaoIn):
 
 
 @app.get("/api/contagem")
-def contagem(propulsoes: str = "", categorias: str = "", marcas: str = "", motores: str = ""):
+def contagem(propulsoes: str = "", categorias: str = "", marcas: str = "", motores: str = "",
+             preco_min: float | None = None, preco_max: float | None = None):
     def lista(s: str) -> list[str]:
         return [x for x in s.split("|") if x]
 
-    f = Filtros(propulsoes=lista(propulsoes), categorias=lista(categorias), marcas=lista(marcas), motores=lista(motores))
+    f = Filtros(
+        propulsoes=lista(propulsoes), categorias=lista(categorias), marcas=lista(marcas), motores=lista(motores),
+        preco_min=preco_min, preco_max=preco_max,
+    )
     return {"total": len(_filtrar(f))}
 
