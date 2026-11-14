@@ -8,7 +8,7 @@ from pathlib import Path
 
 import openpyxl
 
-RAIZ = Path(__file__).resolve().parents[2]
+RAIZ = Path(__file__).resolve().parents[1]  # pasta backend
 XLSX = RAIZ / "Tabela_PBEV_2026_colunas_organizadas.xlsx"
 
 # Índices das colunas na planilha
