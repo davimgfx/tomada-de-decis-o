@@ -2,7 +2,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Filtros, Opcoes, Pesos, PerfilInfo, Perfil, ResumoGeral, Simulacao } from '../models';
 
-const API = 'http://localhost:8000/api';
+// Caminho relativo: o rewrite /api/(.*) do vercel.json encaminha para o serviço "backend".
+const API = '/api';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
